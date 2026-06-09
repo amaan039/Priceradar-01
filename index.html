@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PriceRadar India — Compare Prices Instantly</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0A0A0F; --surface: #13131C; --border: #1E1E2E;
+      --accent: #FF6B00; --accent2: #06B6D4; --gold: #F59E0B;
+      --text: #E4E4F0; --muted: #6B6B8A; --green: #10B981;
+      --red: #EF4444; --radius: 14px;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', sans-serif; min-height: 100vh; overflow-x: hidden; }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image: linear-gradient(rgba(255,107,0,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,107,0,.05) 1px, transparent 1px);
+      background-size: 48px 48px; pointer-events: none; z-index: 0;
+    }
+    header {
+      position: relative; z-index: 10; display: flex; align-items: center;
+      justify-content: space-between; padding: 20px 40px;
+      border-bottom: 1px solid var(--border); backdrop-filter: blur(12px);
+      background: rgba(10,10,15,.8);
+    }
+    .logo { display: flex; align-items: center; gap: 10px; font-family: 'Space Mono', monospace; font-size: 1.3rem; font-weight: 700; }
+    .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--accent), #FF9A3C); border-radius: 8px; display: grid; place-items: center; font-size: 18px; }
+    .badge { font-size: .7rem; padding: 3px 9px; border-radius: 20px; background: rgba(255,107,0,.15); color: #FF9A3C; border: 1px solid rgba(255,107,0,.3); font-family: 'Space Mono', monospace; letter-spacing: 1px; }
+    .creator-tag { font-size: 1rem; color: var(--muted); font-family: 'Space Mono', monospace; }
+    .creator-tag span { color: var(--accent2); font-size: 1.1rem; font-weight: 700; letter-spacing: 1px; }
+    .hero { position: relative; z-index: 1; text-align: center; padding: 72px 20px 48px; }
+    .hero-eyebrow { font-family: 'Space Mono', monospace; font-size: .72rem; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; margin-bottom: 20px; }
+    h1 { font-size: clamp(2.2rem, 6vw, 4rem); font-weight: 700; line-height: 1.05; letter-spacing: -2px; margin-bottom: 18px; }
+    h1 .highlight { background: linear-gradient(90deg, var(--accent), #FF9A3C); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero-sub { font-size: 1.05rem; color: var(--muted); max-width: 520px; margin: 0 auto 32px; line-height: 1.7; }
+    .sites-strip { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px; margin-bottom: 48px; }
+    .site-chip { font-size: .75rem; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border); color: var(--muted); font-family: 'Space Mono', monospace; background: var(--surface); }
+    .search-wrap { position: relative; z-index: 1; max-width: 700px; margin: 0 auto; padding: 0 20px; }
+    .search-box { display: flex; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 10px 10px 20px; transition: border-color .2s; }
+    .search-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,107,0,.12); }
+    #productInput { flex: 1; background: transparent; border: none; outline: none; color: var(--text); font-family: 'Space Grotesk', sans-serif; font-size: 1rem; }
+    #productInput::placeholder { color: var(--muted); }
+    #searchBtn { background: linear-gradient(135deg, var(--accent), #FF9A3C); color: #fff; border: none; border-radius: 8px; padding: 12px 28px; font-family: 'Space Grotesk', sans-serif; font-size: .95rem; font-weight: 600; cursor: pointer; transition: opacity .2s, transform .15s; white-space: nowrap; }
+    #searchBtn:hover:not(:disabled) { opacity: .88; transform: translateY(-1px); }
+    #searchBtn:disabled { opacity: .5; cursor: not-allowed; }
+    .disclaimer { max-width: 700px; margin: 14px auto 0; padding: 0 20px; font-size: .75rem; color: var(--muted); text-align: center; line-height: 1.6; }
+    #results { position: relative; z-index: 1; max-width: 860px; margin: 56px auto 80px; padding: 0 20px; }
+    .loader { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 60px 0; }
+    .spinner { width: 48px; height: 48px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loader-text { font-family: 'Space Mono', monospace; font-size: .82rem; color: var(--muted); animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+    .results-header { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; flex-wrap: wrap; }
+    .results-header h2 { font-size: 1.3rem; font-weight: 600; }
+    .query-pill { font-family: 'Space Mono', monospace; font-size: .78rem; padding: 4px 12px; background: rgba(255,107,0,.12); border: 1px solid rgba(255,107,0,.3); border-radius: 20px; color: #FF9A3C; }
+    .cards { display: flex; flex-direction: column; gap: 16px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 28px; display: flex; align-items: center; gap: 20px; transition: border-color .2s, transform .15s; animation: fadeUp .35s ease both; }
+    .card:nth-child(2){animation-delay:.08s} .card:nth-child(3){animation-delay:.16s}
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .rank { font-family: 'Space Mono', monospace; font-size: 1.8rem; font-weight: 700; min-width: 48px; text-align: center; }
+    .rank.r1{color:var(--gold)} .rank.r2{color:#94A3B8} .rank.r3{color:#CD7F32}
+    .card-body { flex: 1; min-width: 0; }
+    .site-name { font-size: 1.1rem; font-weight: 600; margin-bottom: 4px; }
+    .site-url { font-size: .78rem; color: var(--muted); font-family: 'Space Mono', monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-price-col { text-align: right; flex-shrink: 0; }
+    .price { font-family: 'Space Mono', monospace; font-size: 1.5rem; font-weight: 700; color: var(--green); }
+    .savings { font-size: .75rem; color: var(--muted); margin-top: 2px; }
+    .savings .chip { display: inline-block; background: rgba(16,185,129,.15); color: var(--green); border-radius: 4px; padding: 1px 6px; font-family: 'Space Mono', monospace; }
+    .visit-btn { display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 9px 18px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: .85rem; font-family: 'Space Grotesk', sans-serif; font-weight: 500; text-decoration: none; transition: background .2s, border-color .2s; }
+    .visit-btn:hover { background: rgba(255,107,0,.12); border-color: var(--accent); color: #FF9A3C; }
+    .arrow { transition: transform .2s; }
+    .visit-btn:hover .arrow { transform: translateX(3px); }
+    .note-card { margin-top: 28px; background: rgba(6,182,212,.06); border: 1px solid rgba(6,182,212,.2); border-radius: var(--radius); padding: 18px 22px; font-size: .85rem; color: #67E8F9; line-height: 1.7; }
+    .note-card strong { color: var(--accent2); }
+    .error-msg { text-align: center; padding: 48px 20px; color: var(--red); font-size: .95rem; }
+    footer { position: relative; z-index: 1; border-top: 1px solid var(--border); text-align: center; padding: 28px 20px; font-size: .78rem; color: var(--muted); font-family: 'Space Mono', monospace; }
+    footer .author { color: var(--accent2); font-size: 1rem; font-weight: 700; letter-spacing: 1px; }
+    @media(max-width:600px){ header{padding:16px 20px} .creator-tag{display:none} .card{flex-wrap:wrap} .card-price-col{width:100%;text-align:left} }
+  </style>
+</head>
+<body>
+<header>
+  <div class="logo">
+    <div class="logo-icon">📡</div>
+    PriceRadar 🇮🇳
+    <span class="badge">AI</span>
+  </div>
+  <div class="creator-tag">created by <span>AMAAN SUHAIL</span></div>
+</header>
+
+<section class="hero">
+  <p class="hero-eyebrow">🇮🇳 India's AI price comparison engine</p>
+  <h1>Sabse sasta price<br/><span class="highlight">across Indian stores</span></h1>
+  <p class="hero-sub">Type any product and our AI scans top Indian shopping sites to find you the 3 cheapest prices — with direct buy links in ₹.</p>
+  <div class="sites-strip">
+    <span class="site-chip">🛒 Amazon.in</span>
+    <span class="site-chip">🔵 Flipkart</span>
+    <span class="site-chip">🟠 Meesho</span>
+    <span class="site-chip">🎽 Myntra</span>
+    <span class="site-chip">📺 Croma</span>
+    <span class="site-chip">📱 Reliance Digital</span>
+    <span class="site-chip">🏷️ Snapdeal</span>
+    <span class="site-chip">+ more</span>
+  </div>
+</section>
+
+<div class="search-wrap">
+  <div class="search-box">
+    <input id="productInput" type="text" placeholder='e.g. "Samsung Galaxy S24", "boAt Earbuds", "Nike shoes"…' autocomplete="off"/>
+    <button id="searchBtn" onclick="comparePrice()">Dhundo Sasta →</button>
+  </div>
+</div>
+<p class="disclaimer">⚡ Results are AI-generated from live web data. Always verify prices before purchasing. Prices in ₹ (INR).</p>
+
+<div id="results"></div>
+
+<footer>🇮🇳 Made for India with ♥ by <span class="author">AMAAN SUHAIL</span> &nbsp;·&nbsp; PriceRadar © 2026</footer>
+
+<script>
+  const input = document.getElementById('productInput');
+  const results = document.getElementById('results');
+  const btn = document.getElementById('searchBtn');
+
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') comparePrice(); });
+
+  async function comparePrice() {
+    const query = input.value.trim();
+    if (!query) { input.focus(); return; }
+
+    btn.disabled = true;
+    btn.textContent = 'Dhoondh raha hai…';
+    results.innerHTML = `<div class="loader"><div class="spinner"></div><p class="loader-text">Scanning Indian retailers for "${query}"…</p></div>`;
+
+    try {
+      const resp = await fetch('/api/compare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query })
+      });
+
+      const data = await resp.json();
+      if (data.error) throw new Error(data.error);
+
+      const clean = data.result.replace(/```json|```/gi, '').trim();
+      const jsonStart = clean.indexOf('{');
+      const jsonEnd = clean.lastIndexOf('}');
+      if (jsonStart === -1) throw new Error('No results found');
+
+      const parsed = JSON.parse(clean.slice(jsonStart, jsonEnd + 1));
+      renderResults(parsed, query);
+
+    } catch (err) {
+      results.innerHTML = `<div class="error-msg">⚠️ Could not fetch results. Please try again.<br/><small style="color:var(--muted)">${err.message}</small></div>`;
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Dhundo Sasta →';
+  }
+
+  function formatINR(amount) {
+    return Number(amount).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  }
+
+  function renderResults(data, rawQuery) {
+    const list = data.results || [];
+    const cards = list.map((item, i) => {
+      const cheapest = parseFloat(list[0].price);
+      const current  = parseFloat(item.price);
+      const extra    = current - cheapest;
+      const diff     = i === 0 ? '✦ Sabse Sasta' : `+₹${formatINR(extra)} vs cheapest`;
+      const rankClass = ['r1','r2','r3'][i] || '';
+      const medal = ['🥇','🥈','🥉'][i] || `#${i+1}`;
+      return `
+        <div class="card">
+          <div class="rank ${rankClass}">${medal}</div>
+          <div class="card-body">
+            <div class="site-name">${esc(item.site)}</div>
+            <div class="site-url">${esc(item.url)}</div>
+            ${item.note ? `<div style="margin-top:6px;font-size:.8rem;color:var(--muted)">💬 ${esc(item.note)}</div>` : ''}
+            <a class="visit-btn" href="${esc(item.url)}" target="_blank" rel="noopener noreferrer">Buy Now <span class="arrow">→</span></a>
+          </div>
+          <div class="card-price-col">
+            <div class="price">₹${formatINR(item.price)}</div>
+            <div class="savings"><span class="chip">${diff}</span></div>
+          </div>
+        </div>`;
+    }).join('');
+
+    results.innerHTML = `
+      <div class="results-header">
+        <h2>🇮🇳 Top 3 Cheapest in India</h2>
+        <span class="query-pill">${esc(data.product || rawQuery)}</span>
+      </div>
+      <div class="cards">${cards}</div>
+      ${data.note ? `<div class="note-card"><strong>💡 Deal summary:</strong> ${esc(data.note)}</div>` : ''}`;
+  }
+
+  function esc(str) {
+    return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+  </html>
+      
